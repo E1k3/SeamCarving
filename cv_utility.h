@@ -8,18 +8,32 @@ namespace cvutil
 {
 	/**
 	 * @brief grayscale Converts 8UC3 images to 8UC1 by averaging the channels per pixel.
-	 * @param original The original 8UC3 image.
+	 * @param image The original 8UC3 image.
 	 * @return The averaged 8UC1 image.
 	 */
-	cv::Mat grayscale(const cv::Mat& original);
+	cv::Mat grayscale(const cv::Mat& image);
 
 	/**
 	 * @brief energy Converts a single channel image to the result of its energy function per pixel.
 	 * To achieve this, a sobel edge detection is applied to the original and the gradient lengths are in a new image of the same type.
-	 * @param original The original one channel image.
+	 * @param image The original one channel image.
 	 * @return The new image of equal type containing the gradient lengths.
 	 */
-	cv::Mat energy(const cv::Mat& original);
+	cv::Mat energy(const cv::Mat& image);
+
+	std::vector<int> vertical_seam(const cv::Mat& image, std::function<bool(int, int)> compare = std::less<int>());
+
+//	std::vector<int> horizontal_seam(const cv::Mat& image, std::function<bool(int, int)> compare = std::less<int>());
+
+	template<typename T>
+	void remove_vertical_seam(cv::Mat& image, const std::vector<int>& seam)
+	{
+		for(int i = 0; i < image.rows; ++i)
+			for(int j = seam[static_cast<size_t>(i)]+1; j < image.cols; ++j)
+				image.at<T>(i, j-1) = image.at<T>(i, j);
+
+		image = cv::Mat(image, cv::Range(0, image.rows), cv::Range(0, image.cols-1));
+	}
 
 	template<typename T>
 	/**

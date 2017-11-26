@@ -22,7 +22,7 @@ MainWindow::~MainWindow()
 void MainWindow::on_pbOpenImage_clicked()
 {
     /* oeffne Bild mit Hilfe eines Dateidialogs */
-    QString imagePath = QFileDialog::getOpenFileName(this, "Open Image...", QString(), QString("Images *.png *.jpg *.tiff *.tif"));
+	QString imagePath = QFileDialog::getOpenFileName(this, "Open Image...", QString(), QString("Images *.png *.jpg *.tiff *.tif *.jpeg"));
     
     /* wenn ein gueltiger Dateipfad angegeben worden ist... */
     if(!imagePath.isNull() && !imagePath.isEmpty())
@@ -60,16 +60,32 @@ void MainWindow::on_pbComputeSeams_clicked()
     int rowsToRemove = sbRows->value();
     
     /* .............. */
-	auto gray = cvutil::grayscale(originalImage);
+	gray = cvutil::grayscale(originalImage);
+//	cv::namedWindow("Grayscale", cv::WINDOW_GUI_EXPANDED);
+//	cv::imshow("Grayscale", gray);
 
-	cv::imshow("Grayscale", gray);
-	auto energy = cvutil::energy(gray);
-	cv::imshow("Energy", energy);
+	energy = cvutil::energy(gray);
+//	cv::namedWindow("Energy", cv::WINDOW_GUI_EXPANDED);
+//	cv::imshow("Energy", energy);
+	auto old = originalImage.clone();
+	cv::namedWindow("Old", cv::WINDOW_GUI_EXPANDED);
+	cv::imshow("Old", old);
 }
 
 void MainWindow::on_pbRemoveSeams_clicked()
 {
     /* .............. */
+	auto seam = cvutil::vertical_seam(energy);
+//		originalImage.at<cv::Vec<uchar, 3>>(i, seam[static_cast<size_t>(i)])[0] = 0;
+//		originalImage.at<cv::Vec<uchar, 3>>(i, seam[static_cast<size_t>(i)])[1] = 0;
+//		originalImage.at<cv::Vec<uchar, 3>>(i, seam[static_cast<size_t>(i)])[2] = 255;
+	cvutil::remove_vertical_seam<uchar>(gray, seam);
+	cvutil::remove_vertical_seam<uchar>(energy, seam);
+	cvutil::remove_vertical_seam<cv::Vec<uchar, 3>>(originalImage, seam);
+	energy = cvutil::energy(gray);
+	cv::imshow("Original Image", originalImage);
+//	cv::imshow("Grayscale", gray);
+//	cv::imshow("Energy", energy);
 }
 
 void MainWindow::setupUi()

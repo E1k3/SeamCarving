@@ -63,6 +63,8 @@ private:
     
     /* Originalbild */
     cv::Mat         originalImage;
+	cv::Mat			gray;
+	cv::Mat			energy;
     /* Eventuell weitere Klassenattribute */
     
     /* Methode initialisiert die UI */
