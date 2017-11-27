@@ -23,16 +23,48 @@ namespace cvutil
 
 	std::vector<int> vertical_seam(const cv::Mat& image, std::function<bool(int, int)> compare = std::less<int>());
 
-//	std::vector<int> horizontal_seam(const cv::Mat& image, std::function<bool(int, int)> compare = std::less<int>());
+	std::vector<int> horizontal_seam(const cv::Mat& image, std::function<bool(int, int)> compare = std::less<int>());
 
 	template<typename T>
+	/**
+	 * @brief remove_vertical_seam Removes one pixel per row by moving all pixels after that one to the left and reducing the matrix header by one column.
+	 * @param image The image that is modified.
+	 * @param seam The vector that contains the column coordinate for each row. seam.size() == image.rows
+	 */
 	void remove_vertical_seam(cv::Mat& image, const std::vector<int>& seam)
 	{
-		for(int i = 0; i < image.rows; ++i)
-			for(int j = seam[static_cast<size_t>(i)]+1; j < image.cols; ++j)
-				image.at<T>(i, j-1) = image.at<T>(i, j);
+		if(image.rows != static_cast<int>(seam.size()))
+		{
+			std::cout << "ERROR: Seam size does not match up with image width. Seam removal not supported!" << std::endl;
+			throw std::invalid_argument{"Vertical seam removal applied to mismatching image and seam"};
+		}
+
+		for(int r = 0; r < image.rows; ++r)
+			for(int c = seam[static_cast<size_t>(r)]+1; c < image.cols; ++c)
+				image.at<T>(r, c-1) = image.at<T>(r, c);
 
 		image = cv::Mat(image, cv::Range(0, image.rows), cv::Range(0, image.cols-1));
+	}
+
+	template<typename T>
+	/**
+	 * @brief remove_horizontal_seam Removes one pixel per column by moving all pixels after that one upwards and reducing the matrix header by one row.
+	 * @param image The image that is modified.
+	 * @param seam The vector that contains the row coordinate for each column. seam.size() == image.cols
+	 */
+	void remove_horizontal_seam(cv::Mat& image, const std::vector<int>& seam)
+	{
+		if(image.cols != static_cast<int>(seam.size()))
+		{
+			std::cout << "ERROR: Seam size does not match up with image height. Seam removal not supported!" << std::endl;
+			throw std::invalid_argument{"Horizontal seam removal applied to mismatching image and seam"};
+		}
+
+		for(int c = 0; c < image.cols; ++c)
+			for(int r = seam[static_cast<size_t>(c)]; r < image.rows; ++r)
+				image.at<T>(r-1, c) = image.at<T>(r, c);
+
+		image = cv::Mat(image, cv::Range(0, image.rows-1), cv::Range(0, image.cols));
 	}
 
 	template<typename T>
@@ -48,7 +80,6 @@ namespace cvutil
 		auto size = image.size();
 		row = std::clamp(row, 0, size.height-1);
 		col = std::clamp(col, 0, size.width-1);
-		/*DEBUG REMOVE THIS*/if(row < 0 || col < 0 || row >= size.height || col >= size.width) std::cout << "FAIL(" << row << ',' << col << ')' << std::endl;
 		return image.at<T>(row, col);
 	}
 
@@ -73,7 +104,6 @@ namespace cvutil
 		if(col >= size.width)
 			col = size.width - (col % size.width) - 1;
 
-		/*DEBUG REMOVE THIS*/if(row < 0 || col < 0 || row >= size.height || col >= size.width) std::cout << "FAIL(" << row << ',' << col << ')' << std::endl;
 		return image.at<T>(row, col);
 	}
 
@@ -90,7 +120,6 @@ namespace cvutil
 		auto size = image.size();
 		row = (row+size.height) % size.height;
 		col = (col+size.width) % size.width;
-		/*DEBUG REMOVE THIS*/if(row < 0 || col < 0 || row >= size.height || col >= size.width) std::cout << "FAIL(" << row << ',' << col << ')' << std::endl;
 		return image.at<T>(row, col);
 	}
 }
