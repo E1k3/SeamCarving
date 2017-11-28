@@ -54,10 +54,10 @@ void MainWindow::on_pbOpenImage_clicked()
 void MainWindow::on_pbComputeSeams_clicked()
 {
     /* Anzahl der Spalten, die entfernt werden sollen */
-    int colsToRemove = sbCols->value();
+//    int colsToRemove = sbCols->value();
     
     /* Anzahl der Zeilen, die entfernt werden sollen */
-    int rowsToRemove = sbRows->value();
+//    int rowsToRemove = sbRows->value();
     
     /* .............. */
 	gray = cvutil::grayscale(originalImage);
@@ -68,41 +68,47 @@ void MainWindow::on_pbComputeSeams_clicked()
 	cv::namedWindow("Energy", cv::WINDOW_GUI_EXPANDED);
 	cv::imshow("Energy", energy);
 
-	auto seam = cvutil::vertical_seam(energy);
-	for(int row = 0; row < originalImage.rows; ++row)
-	{
-		originalImage.at<cv::Vec<uchar, 3>>(row, seam[static_cast<size_t>(row)])[0] = 0;
-		originalImage.at<cv::Vec<uchar, 3>>(row, seam[static_cast<size_t>(row)])[1] = 0;
-		originalImage.at<cv::Vec<uchar, 3>>(row, seam[static_cast<size_t>(row)])[2] = 255;
-//		gray.at<uchar>(row, seam[static_cast<size_t>(row)]) = 255;
-//		energy.at<uchar>(row, seam[static_cast<size_t>(row)]) = 255;
-	}
 
-	seam = cvutil::horizontal_seam(energy);
-	for(int col = 0; col < originalImage.cols; ++col)
-	{
-		originalImage.at<cv::Vec<uchar, 3>>(seam[static_cast<size_t>(col)], col)[0] = 0;
-		originalImage.at<cv::Vec<uchar, 3>>(seam[static_cast<size_t>(col)], col)[1] = 0;
-		originalImage.at<cv::Vec<uchar, 3>>(seam[static_cast<size_t>(col)], col)[2] = 255;
-//		gray.at<uchar>(seam[static_cast<size_t>(col), col]) = 255;
-//		energy.at<uchar>(seam[static_cast<size_t>(col)], col) = 255;
-	}
-
-	cv::imshow("Original Image", originalImage);
-	cv::imshow("Grayscale", gray);
-	cv::imshow("Energy", energy);
 }
 
 void MainWindow::on_pbRemoveSeams_clicked()
 {
     /* .............. */
+//	auto seam = cvutil::vertical_seam(energy);
+//	for(int row = 0; row < originalImage.rows; ++row)
+//	{
+//		originalImage.at<cv::Vec<uchar, 3>>(row, seam[static_cast<size_t>(row)])[0] = 0;
+//		originalImage.at<cv::Vec<uchar, 3>>(row, seam[static_cast<size_t>(row)])[1] = 0;
+//		originalImage.at<cv::Vec<uchar, 3>>(row, seam[static_cast<size_t>(row)])[2] = 255;
+//		gray.at<uchar>(row, seam[static_cast<size_t>(row)]) = 255;
+//		energy.at<uchar>(row, seam[static_cast<size_t>(row)]) = 255;
+//	}
+
 //	cvutil::remove_vertical_seam<uchar>(gray, seam);
 //	cvutil::remove_vertical_seam<uchar>(energy, seam);
 //	cvutil::remove_vertical_seam<cv::Vec<uchar, 3>>(originalImage, seam);
-//	energy = cvutil::energy(gray);
-//	cv::imshow("Original Image", originalImage);
-//	cv::imshow("Grayscale", gray);
-//	cv::imshow("Energy", energy);
+
+	auto seam = cvutil::horizontal_seam(energy);
+	for(int col = 0; col < originalImage.cols; ++col)
+	{
+		originalImage.at<cv::Vec<uchar, 3>>(seam[static_cast<size_t>(col)], col)[0] = 0;
+		originalImage.at<cv::Vec<uchar, 3>>(seam[static_cast<size_t>(col)], col)[1] = 0;
+		originalImage.at<cv::Vec<uchar, 3>>(seam[static_cast<size_t>(col)], col)[2] = 255;
+		gray.at<uchar>(seam[static_cast<size_t>(col)], col) = 255;
+		energy.at<uchar>(seam[static_cast<size_t>(col)], col) = 255;
+	}
+
+	cvutil::remove_horizontal_seam<uchar>(gray, seam);
+	cvutil::remove_horizontal_seam<uchar>(energy, seam);
+	cvutil::remove_horizontal_seam<cv::Vec<uchar, 3>>(originalImage, seam);
+
+	cv::imshow("Original Image", originalImage);
+	cv::imshow("Grayscale", gray);
+	cv::imshow("Energy", energy);
+
+	cv::imshow("Original Image", originalImage);
+	cv::imshow("Grayscale", gray);
+	cv::imshow("Energy", energy);
 }
 
 void MainWindow::setupUi()

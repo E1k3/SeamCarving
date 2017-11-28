@@ -61,7 +61,7 @@ namespace cvutil
 		}
 
 		for(int c = 0; c < image.cols; ++c)
-			for(int r = seam[static_cast<size_t>(c)]; r < image.rows; ++r)
+			for(int r = seam[static_cast<size_t>(c)]+1; r < image.rows; ++r)
 				image.at<T>(r-1, c) = image.at<T>(r, c);
 
 		image = cv::Mat(image, cv::Range(0, image.rows-1), cv::Range(0, image.cols));

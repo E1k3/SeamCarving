@@ -104,7 +104,7 @@ cv::Mat cvutil::energy(const cv::Mat& image)
 					// Calculate gradient length using the euclidean norm.
 					// Scale down to [0, max(uchar)] by dividing the gradients by 3 and the length by sqrt(2).
 					// Clamp to [0, max(uchar)] to prevent possible overflows due to floating point arithmetic.
-//					energy.at<uchar>(r, c) = static_cast<uchar>(std::clamp(std::sqrt(grad_h*grad_h/9 + grad_v*grad_v/9) / std::sqrt(2.0), 0.0, static_cast<double>(std::numeric_limits<uchar>::max())));
+					energy.at<uchar>(r, c) = static_cast<uchar>(std::clamp(std::sqrt(grad_h*grad_h/9 + grad_v*grad_v/9) / std::sqrt(2.0), 0.0, static_cast<double>(std::numeric_limits<uchar>::max())));
 
 					// Calculate sum of absolute gradients.
 					// Scale down to [0, max(uchar)] by dividing the sum by 2.
@@ -156,9 +156,18 @@ std::vector<int> cvutil::vertical_seam(const cv::Mat& image, std::function<bool(
 			threads.emplace_back([t, &thread_count, &image, &current, &last, &routes, &compare, &r] () {
 				for(int c = t; c < image.cols; c+=thread_count)
 				{
-					// Find max neighbour
 					current[static_cast<size_t>(c)] = last[static_cast<size_t>(c)];
 					routes.at<signed char>(r, c) = 0;
+					// Find max neighbour
+					for(int off = -1; off < 2; off+=2)
+					{
+						if(c+off >= 0 && c+off < image.cols && compare(last[static_cast<size_t>(c-1)], current[static_cast<size_t>(c)]))
+						{
+							current[static_cast<size_t>(c)] = last[static_cast<size_t>(c-1)];
+							routes.at<signed char>(r, c) = -1;
+						}
+					}
+
 
 					if(c-1 >= 0 && compare(last[static_cast<size_t>(c-1)], current[static_cast<size_t>(c)]))
 					{

@@ -33,10 +33,18 @@ win32 {
     # Windows Compiler Flags
 }
 
+
 unix {
 
-    LIBS += -lopencv_core \
-            -lopencv_highgui \
-            -lopencv_imgproc \
+
+#	INCLUDEPATH += /usr/include
+
+#	LIBS += -L/usr/local/lib \
+	LIBS +=	-lopencv_core \
+			-lopencv_highgui \
+			-lopencv_imgproc \
 			-lopencv_imgcodecs
+
+#	QMAKE_CXXFLAGS += -std=c++11 -Wall -pedantic -Wno-unknown-pragmas
+#	QMAKE_CXXFLAGS_WARN_ON = -Wno-unused-variable -Wno-reorder
 }
