@@ -159,16 +159,6 @@ std::vector<int> cvutil::vertical_seam(const cv::Mat& image, std::function<bool(
 					current[static_cast<size_t>(c)] = last[static_cast<size_t>(c)];
 					routes.at<signed char>(r, c) = 0;
 					// Find max neighbour
-					for(int off = -1; off < 2; off+=2)
-					{
-						if(c+off >= 0 && c+off < image.cols && compare(last[static_cast<size_t>(c-1)], current[static_cast<size_t>(c)]))
-						{
-							current[static_cast<size_t>(c)] = last[static_cast<size_t>(c-1)];
-							routes.at<signed char>(r, c) = -1;
-						}
-					}
-
-
 					if(c-1 >= 0 && compare(last[static_cast<size_t>(c-1)], current[static_cast<size_t>(c)]))
 					{
 						current[static_cast<size_t>(c)] = last[static_cast<size_t>(c-1)];

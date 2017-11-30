@@ -9,6 +9,7 @@
 #include <QLabel>
 #include <QGroupBox>
 #include <QStatusBar>
+#include <QCheckBox>
 
 #include "QtOpencvCore.hpp"
 #include "opencv2/core/core.hpp"
@@ -59,14 +60,19 @@ private:
     
     QSpacerItem *verticalSpacer;
     QSpacerItem *horizontalSpacer;
+
+	QCheckBox *cbMark;
     /*****************************************/
     
     /* Originalbild */
     cv::Mat         originalImage;
+    /* Eventuell weitere Klassenattribute */
 	cv::Mat			gray;
 	cv::Mat			energy;
-    /* Eventuell weitere Klassenattribute */
-    
+	cv::Mat			carved;
+	std::vector<std::vector<int>> horizontal_seams{};
+	std::vector<std::vector<int>> vertical_seams{};
+
     /* Methode initialisiert die UI */
     void setupUi();
     

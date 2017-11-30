@@ -43,7 +43,7 @@ namespace cvutil
 			for(int c = seam[static_cast<size_t>(r)]+1; c < image.cols; ++c)
 				image.at<T>(r, c-1) = image.at<T>(r, c);
 
-		image = cv::Mat(image, cv::Range(0, image.rows), cv::Range(0, image.cols-1));
+		image = image(cv::Range(0, image.rows), cv::Range(0, image.cols-1));
 	}
 
 	template<typename T>
@@ -64,7 +64,7 @@ namespace cvutil
 			for(int r = seam[static_cast<size_t>(c)]+1; r < image.rows; ++r)
 				image.at<T>(r-1, c) = image.at<T>(r, c);
 
-		image = cv::Mat(image, cv::Range(0, image.rows-1), cv::Range(0, image.cols));
+		image = image(cv::Range(0, image.rows-1), cv::Range(0, image.cols));
 	}
 
 	template<typename T>

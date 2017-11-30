@@ -40,9 +40,14 @@ void MainWindow::on_pbOpenImage_clicked()
             enableGUI();
             
             /* ...zeige das Originalbild in einem separaten Fenster an */
-			cv::namedWindow("Original Image", cv::WINDOW_GUI_EXPANDED);
+			cv::namedWindow("Original Image", cv::WINDOW_FREERATIO);
             cv::imshow("Original Image", originalImage); 
-        }
+
+			sbRows->setMinimum(0);
+			sbRows->setMaximum(originalImage.rows-2);
+			sbCols->setMinimum(0);
+			sbCols->setMaximum(originalImage.cols-2);
+		}
         else
         {
             /* ...sonst deaktiviere das UI */
@@ -54,72 +59,99 @@ void MainWindow::on_pbOpenImage_clicked()
 void MainWindow::on_pbComputeSeams_clicked()
 {
     /* Anzahl der Spalten, die entfernt werden sollen */
-//    int colsToRemove = sbCols->value();
+    int colsToRemove = sbCols->value();
     
     /* Anzahl der Zeilen, die entfernt werden sollen */
-//    int rowsToRemove = sbRows->value();
+    int rowsToRemove = sbRows->value();
     
     /* .............. */
 	gray = cvutil::grayscale(originalImage);
-	cv::namedWindow("Grayscale", cv::WINDOW_GUI_EXPANDED);
-	cv::imshow("Grayscale", gray);
 
-	energy = cvutil::energy(gray);
-	cv::namedWindow("Energy", cv::WINDOW_GUI_EXPANDED);
-	cv::imshow("Energy", energy);
+	vertical_seams.clear();
+	vertical_seams.reserve(static_cast<size_t>(colsToRemove));
+	auto real_seam = std::vector<int>{};
+	auto original_copy = originalImage.clone();
 
+	for(int c = 0; c < colsToRemove; ++c)
+	{
+		energy = cvutil::energy(gray);
+		vertical_seams.push_back(cvutil::vertical_seam(energy));
+		cvutil::remove_vertical_seam<uchar>(gray, vertical_seams.back());
 
+		// Mark found seams
+		if(cbMark->isChecked())
+		{
+			real_seam = vertical_seams.back();
+			for(int r = 0; r < energy.rows; ++r)
+			{
+				for(int s = static_cast<int>(vertical_seams.size())-2; s >= 0; --s)
+					if(vertical_seams[static_cast<size_t>(s)][static_cast<size_t>(r)] <= real_seam[static_cast<size_t>(r)])
+						++real_seam[static_cast<size_t>(r)];
+				original_copy.at<cv::Vec<uchar, 3>>(r, real_seam[static_cast<size_t>(r)])[0] = 255;
+				original_copy.at<cv::Vec<uchar, 3>>(r, real_seam[static_cast<size_t>(r)])[1] = 0;
+				original_copy.at<cv::Vec<uchar, 3>>(r, real_seam[static_cast<size_t>(r)])[2] = 0;
+			}
+			cv::imshow("Original Image", original_copy);
+		}
+	}
+	horizontal_seams.clear();
+	horizontal_seams.reserve(static_cast<size_t>(rowsToRemove));
+	auto real_horizontal_seams = std::vector<std::vector<int>>{};
+	real_horizontal_seams.reserve(static_cast<size_t>(rowsToRemove));
+
+	for(int r = 0; r < rowsToRemove; ++r)
+	{
+		energy = cvutil::energy(gray);
+		horizontal_seams.push_back(cvutil::horizontal_seam(energy));
+		cvutil::remove_horizontal_seam<uchar>(gray, horizontal_seams.back());
+
+		// Mark found seams (not completely accurate)
+		if(cbMark->isChecked())
+		{
+			real_seam = horizontal_seams.back();
+			for(int c = 0; c < energy.cols; ++c)
+			{
+				for(int s = static_cast<int>(horizontal_seams.size())-2; s >= 0; --s)
+					if(horizontal_seams[static_cast<size_t>(s)][static_cast<size_t>(c)] <= real_seam[static_cast<size_t>(c)])
+						++real_seam[static_cast<size_t>(c)];
+				int c_real = c;
+				for(int s = static_cast<int>(vertical_seams.size())-2; s >= 0; --s)
+					if(vertical_seams[static_cast<size_t>(s)][static_cast<size_t>(real_seam[static_cast<size_t>(c)])] <= c_real)
+						++c_real;
+
+				original_copy.at<cv::Vec<uchar, 3>>(real_seam[static_cast<size_t>(c)], c_real)[0] = 0;
+				original_copy.at<cv::Vec<uchar, 3>>(real_seam[static_cast<size_t>(c)], c_real)[1] = 0;
+				original_copy.at<cv::Vec<uchar, 3>>(real_seam[static_cast<size_t>(c)], c_real)[2] = 255;
+			}
+			cv::imshow("Original Image", original_copy);
+		}
+	}
 }
 
 void MainWindow::on_pbRemoveSeams_clicked()
 {
-    /* .............. */
-//	auto seam = cvutil::vertical_seam(energy);
-//	for(int row = 0; row < originalImage.rows; ++row)
-//	{
-//		originalImage.at<cv::Vec<uchar, 3>>(row, seam[static_cast<size_t>(row)])[0] = 0;
-//		originalImage.at<cv::Vec<uchar, 3>>(row, seam[static_cast<size_t>(row)])[1] = 0;
-//		originalImage.at<cv::Vec<uchar, 3>>(row, seam[static_cast<size_t>(row)])[2] = 255;
-//		gray.at<uchar>(row, seam[static_cast<size_t>(row)]) = 255;
-//		energy.at<uchar>(row, seam[static_cast<size_t>(row)]) = 255;
-//	}
+	carved = originalImage.clone();
+	for(const auto& seam : vertical_seams)
+		cvutil::remove_vertical_seam<cv::Vec<uchar, 3>>(carved, seam);
+	vertical_seams.clear();
 
-//	cvutil::remove_vertical_seam<uchar>(gray, seam);
-//	cvutil::remove_vertical_seam<uchar>(energy, seam);
-//	cvutil::remove_vertical_seam<cv::Vec<uchar, 3>>(originalImage, seam);
+	for(const auto& seam : horizontal_seams)
+		cvutil::remove_horizontal_seam<cv::Vec<uchar, 3>>(carved, seam);
+	horizontal_seams.clear();
 
-	auto seam = cvutil::horizontal_seam(energy);
-	for(int col = 0; col < originalImage.cols; ++col)
-	{
-		originalImage.at<cv::Vec<uchar, 3>>(seam[static_cast<size_t>(col)], col)[0] = 0;
-		originalImage.at<cv::Vec<uchar, 3>>(seam[static_cast<size_t>(col)], col)[1] = 0;
-		originalImage.at<cv::Vec<uchar, 3>>(seam[static_cast<size_t>(col)], col)[2] = 255;
-		gray.at<uchar>(seam[static_cast<size_t>(col)], col) = 255;
-		energy.at<uchar>(seam[static_cast<size_t>(col)], col) = 255;
-	}
-
-	cvutil::remove_horizontal_seam<uchar>(gray, seam);
-	cvutil::remove_horizontal_seam<uchar>(energy, seam);
-	cvutil::remove_horizontal_seam<cv::Vec<uchar, 3>>(originalImage, seam);
-
-	cv::imshow("Original Image", originalImage);
-	cv::imshow("Grayscale", gray);
-	cv::imshow("Energy", energy);
-
-	cv::imshow("Original Image", originalImage);
-	cv::imshow("Grayscale", gray);
-	cv::imshow("Energy", energy);
+	cv::namedWindow("Carved Image", cv::WINDOW_GUI_EXPANDED);
+	cv::imshow("Carved Image", carved);
 }
 
 void MainWindow::setupUi()
 {
     /* Boilerplate code */
     /*********************************************************************************************/
-    resize(129, 211);
+    resize(220, 250);
     QSizePolicy sizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     setSizePolicy(sizePolicy);
-    setMinimumSize(QSize(129, 211));
-    setMaximumSize(QSize(129, 211));
+    setMinimumSize(QSize(220, 250));
+    setMaximumSize(QSize(220, 250));
     centralWidget = new QWidget(this);
     centralWidget->setObjectName(QString("centralWidget"));
     
@@ -162,7 +194,11 @@ void MainWindow::setupUi()
     pbRemoveSeams = new QPushButton(QString("Remove Seams"), centralWidget);
     pbRemoveSeams->setEnabled(false);
     verticalLayout->addWidget(pbRemoveSeams);
-    
+
+	cbMark = new QCheckBox(QString("Mark seams (experimental)"), centralWidget);
+	cbMark->setEnabled(false);
+	verticalLayout->addWidget(cbMark);
+
     verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
     verticalLayout->addItem(verticalSpacer);
     horizontalLayout->addLayout(verticalLayout);
@@ -191,6 +227,8 @@ void MainWindow::enableGUI()
     
     pbComputeSeams->setEnabled(true);
     pbRemoveSeams->setEnabled(true);
+
+	cbMark->setEnabled(true);
     
     sbRows->setMinimum(0);
     sbRows->setMaximum(originalImage.rows);
@@ -213,4 +251,6 @@ void MainWindow::disableGUI()
     
     pbComputeSeams->setEnabled(false);
     pbRemoveSeams->setEnabled(false);
+
+	cbMark->setEnabled(false);
 }
